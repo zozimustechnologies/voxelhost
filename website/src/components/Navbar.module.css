@@ -1,0 +1,106 @@
+.nav {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  background: rgba(13,13,13,.7);
+  backdrop-filter: blur(14px);
+  border-bottom: 1px solid transparent;
+  transition: border-color .3s, background .3s;
+}
+.nav.scrolled {
+  border-bottom-color: var(--border);
+  background: rgba(13,13,13,.92);
+}
+.inner {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 0 1.5rem;
+  height: 64px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+.logo {
+  font-size: 1.3rem;
+  font-weight: 800;
+  color: var(--white);
+  letter-spacing: -.5px;
+  flex-shrink: 0;
+}
+.logo span { color: var(--green); }
+.logo:hover { text-decoration: none; }
+
+.links {
+  display: flex;
+  gap: 2rem;
+  list-style: none;
+  margin: 0 auto;
+}
+.links a {
+  color: var(--text);
+  font-size: .9rem;
+  font-weight: 500;
+}
+.links a:hover { color: var(--green); text-decoration: none; }
+
+.cta { display: flex; gap: .75rem; align-items: center; flex-shrink: 0; }
+
+.userEmail {
+  font-size: .82rem;
+  color: var(--muted);
+  max-width: 160px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.btnPrimary, .btnOutline {
+  padding: .55rem 1.25rem;
+  border-radius: var(--radius);
+  font-weight: 600;
+  font-size: .88rem;
+  font-family: var(--font);
+  cursor: pointer;
+  transition: all .2s;
+}
+.btnPrimary {
+  background: var(--green);
+  color: #000;
+  border: none;
+}
+.btnPrimary:hover { background: #22c55e; text-decoration: none; }
+.btnOutline {
+  background: transparent;
+  border: 1.5px solid var(--border);
+  color: var(--text);
+}
+.btnOutline:hover { border-color: var(--green); color: var(--green); text-decoration: none; }
+
+.hamburger {
+  display: none;
+  background: none;
+  border: none;
+  color: var(--text);
+  cursor: pointer;
+  padding: 4px;
+}
+
+@media (max-width: 768px) {
+  .links {
+    display: none;
+    position: absolute;
+    top: 64px;
+    left: 0;
+    right: 0;
+    background: var(--bg2);
+    border-bottom: 1px solid var(--border);
+    flex-direction: column;
+    padding: 1.25rem 1.5rem;
+    gap: 1.25rem;
+    margin: 0;
+  }
+  .links.open { display: flex; }
+  .cta .btnOutline { display: none; }
+  .hamburger { display: flex; }
+}

@@ -1,0 +1,33 @@
+.section { padding: 5rem 0; }
+.header { text-align: center; margin-bottom: 3.5rem; }
+.header h2 { font-size: clamp(1.7rem, 3.5vw, 2.5rem); }
+.header p { color: var(--muted); margin-top: .75rem; }
+
+.steps {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 2rem;
+}
+.step {
+  text-align: center;
+  position: relative;
+}
+.num {
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  background: rgba(74,222,128,.1);
+  border: 1.5px solid var(--green);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  color: var(--green);
+  font-size: 1.1rem;
+  margin: 0 auto 1rem;
+}
+.connector {
+  display: none;
+}
+.step h3 { font-size: 1rem; margin-bottom: .4rem; }
+.step p { color: var(--muted); font-size: .88rem; }
