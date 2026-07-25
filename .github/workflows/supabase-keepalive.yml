@@ -1,0 +1,46 @@
+name: Supabase Keep-Alive
+
+on:
+  schedule:
+    - cron: '0 */6 * * *'   # every 6 hours
+  workflow_dispatch:          # allow manual trigger
+
+jobs:
+  keepalive:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check Supabase project status
+        id: check
+        run: |
+          STATUS=$(curl -s \
+            -H "Authorization: Bearer ${{ secrets.SUPABASE_ACCESS_TOKEN }}" \
+            -H "Content-Type: application/json" \
+            "https://api.supabase.com/v1/projects/xdawmnuujkfkpphxuflj" \
+            | jq -r '.status')
+
+          echo "status=$STATUS" >> $GITHUB_OUTPUT
+          echo "Project status: $STATUS"
+
+      - name: Restore project if paused
+        if: steps.check.outputs.status != 'ACTIVE_HEALTHY'
+        run: |
+          echo "Project is ${{ steps.check.outputs.status }} — restoring..."
+
+          RESPONSE=$(curl -s -o /dev/null -w "%{http_code}" \
+            -X POST \
+            -H "Authorization: Bearer ${{ secrets.SUPABASE_ACCESS_TOKEN }}" \
+            -H "Content-Type: application/json" \
+            "https://api.supabase.com/v1/projects/xdawmnuujkfkpphxuflj/restore")
+
+          echo "Restore response: HTTP $RESPONSE"
+
+          if [ "$RESPONSE" -ge 200 ] && [ "$RESPONSE" -lt 300 ]; then
+            echo "Restore request accepted."
+          else
+            echo "Restore failed with HTTP $RESPONSE"
+            exit 1
+          fi
+
+      - name: Already healthy
+        if: steps.check.outputs.status == 'ACTIVE_HEALTHY'
+        run: echo "Project is ACTIVE_HEALTHY — nothing to do."
