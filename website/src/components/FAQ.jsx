@@ -9,7 +9,7 @@ const FAQS = [
   },
   {
     q: 'How long does it take to get my server?',
-    a: 'Our target is under 10 minutes from payment confirmation to server delivery. You will receive your IP address, join instructions, backup information, and a support link by email.',
+    a: 'After payment confirmation, we will set up your server and send your IP address, join instructions, and a support link by email as quickly as possible.',
   },
   {
     q: 'Can I install my own plugins?',
@@ -17,7 +17,7 @@ const FAQS = [
   },
   {
     q: 'How do backups work?',
-    a: 'Backups run automatically every day and include your world files, plugins, and configuration. We retain the last 7 days of backups. Restoration is available on request via support.',
+    a: 'Backup details are provided when your server is set up. Contact support for backup or restoration requests.',
   },
   {
     q: 'Which Minecraft versions are supported?',

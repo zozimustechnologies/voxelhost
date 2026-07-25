@@ -18,8 +18,8 @@ export default function Hero() {
         </h1>
 
         <p className={styles.sub}>
-          Paper-optimised servers, daily backups, and a live console —
-          ready in under&nbsp;10 minutes. No bloat. No gimmicks.
+          Paper-optimised servers — stable, simple, and ready when you are.
+          No bloat. No gimmicks.
         </p>
 
         <div className={styles.actions}>
@@ -29,10 +29,9 @@ export default function Hero() {
 
         <div className={styles.stats}>
           {[
-            { num: '<10 min', label: 'Setup time'    },
-            { num: 'Daily',   label: 'Backups'       },
-            { num: '24 / 7',  label: 'Server uptime' },
-            { num: '$5',      label: 'Starting price' },
+            { num: 'Paper',  label: 'Server software' },
+            { num: '₹10',   label: 'Trial plan'       },
+            { num: '₹499',  label: 'Monthly plan'     },
           ].map(s => (
             <div className={styles.stat} key={s.label}>
               <div className={styles.statNum}>{s.num}</div>

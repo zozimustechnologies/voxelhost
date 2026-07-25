@@ -1,5 +1,7 @@
 import './App.css'
-import { AuthProvider } from './context/AuthContext'
+import { useState } from 'react'
+import { AuthProvider }  from './context/AuthContext'
+import { ToastProvider } from './components/Toast'
 import Navbar     from './components/Navbar'
 import Hero       from './components/Hero'
 import Features   from './components/Features'
@@ -9,21 +11,26 @@ import Launchers  from './components/Launchers'
 import FAQ        from './components/FAQ'
 import CTABanner  from './components/CTABanner'
 import Footer     from './components/Footer'
+import AuthModal  from './components/AuthModal'
 
 export default function App() {
+  const [showAuth, setShowAuth] = useState(false)
   return (
     <AuthProvider>
-      <Navbar />
+      <ToastProvider>
+      <Navbar onSignUp={() => setShowAuth(true)} />
       <main>
-        <Hero />
+        <Hero onSignUp={() => setShowAuth(true)} />
         <Features />
         <HowItWorks />
-        <Pricing />
+        <Pricing onSignUp={() => setShowAuth(true)} />
         <Launchers />
         <FAQ />
-        <CTABanner />
+        <CTABanner onSignUp={() => setShowAuth(true)} />
       </main>
       <Footer />
+      {showAuth && <AuthModal onClose={() => setShowAuth(false)} />}
+      </ToastProvider>
     </AuthProvider>
   )
 }

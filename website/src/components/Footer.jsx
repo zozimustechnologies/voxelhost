@@ -21,7 +21,7 @@ export default function Footer() {
       <div className="container">
         <div className={styles.top}>
           <div className={styles.brand}>
-            <div className={styles.logo}>Voxel<span>Host</span></div>
+            <img src={`${import.meta.env.BASE_URL}logo-wordmark.svg`} alt="VoxelHost" className={styles.logoImg} />
             <p>Professional Minecraft server hosting. Paper only. Reliable, fast, and simple.</p>
           </div>
           <div className={styles.cols}>

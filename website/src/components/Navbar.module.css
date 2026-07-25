@@ -21,15 +21,15 @@
   justify-content: space-between;
   gap: 1rem;
 }
-.logo {
-  font-size: 1.3rem;
-  font-weight: 800;
-  color: var(--white);
-  letter-spacing: -.5px;
-  flex-shrink: 0;
-}
-.logo span { color: var(--green); }
+.logo { flex-shrink: 0; display: flex; align-items: center; }
 .logo:hover { text-decoration: none; }
+.logoImg {
+  height: 32px;
+  width: auto;
+  display: block;
+  object-fit: contain;
+  object-position: center;
+}
 
 .links {
   display: flex;

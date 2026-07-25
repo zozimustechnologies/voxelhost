@@ -3,12 +3,12 @@ import styles from './Launchers.module.css'
 const LAUNCHERS = [
   { icon: '🎮', name: 'Official Launcher', status: 'Tested',  ok: true  },
   { icon: '🔵', name: 'TLauncher',         status: 'Tested',  ok: true  },
-  { icon: '🔷', name: 'Prism Launcher',    status: 'Tested',  ok: true  },
-  { icon: '🟠', name: 'CurseForge',        status: 'Tested',  ok: true  },
-  { icon: '🟣', name: 'Modrinth',          status: 'Tested',  ok: true  },
-  { icon: '🔶', name: 'MultiMC',           status: 'Tested',  ok: true  },
-  { icon: '🟡', name: 'SKLauncher',        status: 'Tested',  ok: true  },
-  { icon: '🔴', name: 'HMCL',              status: 'Tested',  ok: true  },
+  { icon: '�', name: 'SKLauncher',        status: 'Tested',  ok: true  },
+  { icon: '🔷', name: 'Prism Launcher',    status: 'Testing', ok: false },
+  { icon: '🟠', name: 'CurseForge',        status: 'Testing', ok: false },
+  { icon: '🟣', name: 'Modrinth',          status: 'Testing', ok: false },
+  { icon: '🔶', name: 'MultiMC',           status: 'Testing', ok: false },
+  { icon: '🔴', name: 'HMCL',              status: 'Testing', ok: false },
   { icon: '📱', name: 'PojavLauncher',     status: 'Testing', ok: false },
 ]
 
@@ -30,6 +30,14 @@ export default function Launchers() {
               </span>
             </div>
           ))}
+        </div>
+        <div className={styles.note}>
+          <span className={styles.noteIcon}>⚠️</span>
+          <p>
+            <strong>Online vs Offline mode:</strong> A server can only run in one mode at a time.
+            If your server is set to offline mode (for cracked launchers), players with a paid
+            Minecraft account cannot join — and vice versa. Choose one mode per server.
+          </p>
         </div>
       </div>
     </section>

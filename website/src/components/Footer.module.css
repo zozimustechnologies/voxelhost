@@ -11,13 +11,14 @@
   margin-bottom: 2.5rem;
 }
 .brand p { color: var(--muted); font-size: .88rem; margin-top: .5rem; max-width: 240px; }
-.logo {
-  font-size: 1.3rem;
-  font-weight: 800;
-  color: var(--white);
-  letter-spacing: -.5px;
+.logoImg {
+  height: 28px;
+  width: auto;
+  display: block;
+  object-fit: contain;
+  object-position: center;
+  margin-bottom: .5rem;
 }
-.logo span { color: var(--green); }
 
 .cols { display: flex; gap: 3rem; flex-wrap: wrap; }
 .col h4 {
