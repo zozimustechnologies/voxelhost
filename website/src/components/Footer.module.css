@@ -12,11 +12,12 @@
 }
 .brand p { color: var(--muted); font-size: .88rem; margin-top: .5rem; max-width: 240px; }
 .logoImg {
-  height: 28px;
+  height: 48px;
+  max-width: 260px;
   width: auto;
   display: block;
   object-fit: contain;
-  object-position: center;
+  object-position: left center;
   mix-blend-mode: screen;
   margin-bottom: .5rem;
 }
