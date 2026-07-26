@@ -9,13 +9,6 @@ jobs:
   keepalive:
     runs-on: ubuntu-latest
     steps:
-      - name: Generate bot token
-        id: bot-token
-        uses: actions/create-github-app-token@v1
-        with:
-          app-id: ${{ secrets.APP_ID }}
-          private-key: ${{ secrets.APP_PRIVATE_KEY }}
-
       - name: Check Supabase project status
         id: check
         run: |
