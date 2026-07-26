@@ -22,9 +22,9 @@ jobs:
           echo "Project status: $STATUS"
 
       - name: Restore project if paused
-        if: steps.check.outputs.status != 'ACTIVE_HEALTHY'
+        if: steps.check.outputs.status == 'INACTIVE'
         run: |
-          echo "Project is ${{ steps.check.outputs.status }} — restoring..."
+          echo "Project is INACTIVE — restoring..."
 
           RESPONSE=$(curl -s -o /dev/null -w "%{http_code}" \
             -X POST \
@@ -41,6 +41,6 @@ jobs:
             exit 1
           fi
 
-      - name: Already healthy
-        if: steps.check.outputs.status == 'ACTIVE_HEALTHY'
-        run: echo "Project is ACTIVE_HEALTHY — nothing to do."
+      - name: Already healthy or waking up
+        if: steps.check.outputs.status != 'INACTIVE'
+        run: echo "Project is ${{ steps.check.outputs.status }} — no action needed."
