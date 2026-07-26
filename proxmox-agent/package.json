@@ -1,6 +1,7 @@
 {
   "name": "voxelhost-agent",
   "version": "1.0.0",
+  "type": "module",
   "description": "Proxmox agent that polls Supabase for server management jobs and executes them",
   "main": "agent.js",
   "scripts": {
