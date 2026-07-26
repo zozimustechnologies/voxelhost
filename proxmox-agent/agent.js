@@ -34,11 +34,16 @@ try {
 const exec = promisify(execFile)
 
 // ── Config ────────────────────────────────────────────────────
-const SUPABASE_URL      = requireEnv('SUPABASE_URL')
-const SUPABASE_KEY      = requireEnv('SUPABASE_SERVICE_ROLE_KEY')
-const MC_CONTAINER_ID   = requireEnv('MC_CONTAINER_ID')        // LXC container ID, e.g. "100"
-const BACKUP_STORAGE    = process.env.BACKUP_STORAGE ?? 'local' // Proxmox storage for backups
-const POLL_INTERVAL_MS  = Number(process.env.POLL_INTERVAL_MS ?? 5000)
+const SUPABASE_URL     = requireEnv('SUPABASE_URL')
+const SUPABASE_KEY     = requireEnv('SUPABASE_SERVICE_ROLE_KEY')
+const BACKUP_STORAGE   = process.env.BACKUP_STORAGE   ?? 'local'
+const MC_SCREEN_NAME   = process.env.MC_SCREEN_NAME   ?? 'mc'
+const POLL_INTERVAL_MS = Number(process.env.POLL_INTERVAL_MS ?? 5000)
+
+// Comma-separated list of allowed MC container IDs, e.g. "101,102,103"
+const MC_CONTAINERS = new Set(
+  requireEnv('MC_CONTAINERS').split(',').map(s => s.trim()).filter(Boolean)
+)
 
 function requireEnv(key) {
   const val = process.env[key]
@@ -51,38 +56,56 @@ const supabase = createClient(SUPABASE_URL, SUPABASE_KEY)
 // ── Job handlers ──────────────────────────────────────────────
 
 async function handleMcAllowlist(payload, action /* 'add' | 'remove' */) {
-  const username = payload.username?.trim()
-  if (!username) throw new Error('payload.username is required')
+  const username    = payload.username?.trim()
+  const containerId = String(payload.container_id ?? '').trim()
 
-  // Run minecraft command inside the LXC container via pct exec
+  if (!username)    throw new Error('payload.username is required')
+  if (!containerId) throw new Error('payload.container_id is required')
+  if (!MC_CONTAINERS.has(containerId)) {
+    throw new Error(`container_id "${containerId}" is not in the allowed list (${[...MC_CONTAINERS].join(', ')})`)
+  }
+
+  // Send whitelist command to the Paper server running in a screen session inside the LXC container
   const command = `whitelist ${action} ${username}`
   const { stdout, stderr } = await exec('pct', [
-    'exec', MC_CONTAINER_ID, '--',
-    'bash', '-c', `su -s /bin/bash minecraft -c 'screen -S minecraft -X stuff "${command}\\n"' 2>&1 || true`,
+    'exec', containerId, '--',
+    'screen', '-S', MC_SCREEN_NAME, '-X', 'stuff', `${command}\n`,
   ])
 
   const output = (stdout + stderr).trim()
-  console.log(`[mc_allowlist_${action}] ${username}: ${output || '(no output)'}`)
-  return output || `whitelist ${action} ${username} executed`
+  console.log(`[mc_allowlist_${action}] CT${containerId} ${username}: ${output || '(no output)'}`)
+  return output || `whitelist ${action} ${username} sent to CT${containerId}`
 }
 
 async function handleProxmoxBackup(payload) {
-  const vmid    = payload.vmid ?? MC_CONTAINER_ID
   const storage = payload.storage ?? BACKUP_STORAGE
   const mode    = payload.mode    ?? 'snapshot'  // snapshot | suspend | stop
 
-  console.log(`[proxmox_backup] Starting backup of CT ${vmid} to storage "${storage}"...`)
+  // If container_id provided, back up that one; otherwise back up all MC containers
+  const targets = payload.container_id
+    ? [String(payload.container_id)]
+    : [...MC_CONTAINERS]
 
-  const { stdout, stderr } = await exec('vzdump', [
-    String(vmid),
-    '--storage', storage,
-    '--compress', 'zstd',
-    '--mode', mode,
-  ])
+  // Validate any explicitly provided container_id
+  if (payload.container_id && !MC_CONTAINERS.has(String(payload.container_id))) {
+    throw new Error(`container_id "${payload.container_id}" is not in the allowed list`)
+  }
 
-  const output = (stdout + stderr).trim()
-  console.log(`[proxmox_backup] Done: ${output.slice(-200)}`)
-  return `Backup of CT ${vmid} completed`
+  const results = []
+  for (const vmid of targets) {
+    console.log(`[proxmox_backup] Starting backup of CT${vmid} to storage "${storage}"...`)
+    const { stdout, stderr } = await exec('vzdump', [
+      vmid,
+      '--storage', storage,
+      '--compress', 'zstd',
+      '--mode', mode,
+    ])
+    const out = (stdout + stderr).trim()
+    console.log(`[proxmox_backup] CT${vmid} done`)
+    results.push(`CT${vmid}: ok`)
+  }
+
+  return results.join(', ')
 }
 
 // ── Main poll loop ────────────────────────────────────────────
@@ -163,7 +186,7 @@ async function poll() {
 
 // ── Start ─────────────────────────────────────────────────────
 console.log(`[agent] VoxelHost agent started. Polling every ${POLL_INTERVAL_MS}ms`)
-console.log(`[agent] MC container: ${MC_CONTAINER_ID}, backup storage: ${BACKUP_STORAGE}`)
+console.log(`[agent] MC containers: ${[...MC_CONTAINERS].join(', ')}, screen: "${MC_SCREEN_NAME}", backup storage: ${BACKUP_STORAGE}`)
 
 poll()
 setInterval(poll, POLL_INTERVAL_MS)
