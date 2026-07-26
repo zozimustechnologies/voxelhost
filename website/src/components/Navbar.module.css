@@ -29,6 +29,7 @@
   display: block;
   object-fit: contain;
   object-position: center;
+  mix-blend-mode: screen;
 }
 
 .links {

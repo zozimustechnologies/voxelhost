@@ -28,7 +28,7 @@ export default function Navbar({ onSignUp }) {
     <nav className={`${styles.nav} ${scrolled ? styles.scrolled : ''}`}>
       <div className={styles.inner}>
 <a href="#" className={styles.logo}>
-          <img src={`${import.meta.env.BASE_URL}logo-wordmark.svg`} alt="VoxelHost" className={styles.logoImg} />
+          <img src={`${import.meta.env.BASE_URL}logo-icon.png`} alt="VoxelHost" className={styles.logoImg} />
         </a>
 
         <ul className={`${styles.links} ${open ? styles.open : ''}`}>

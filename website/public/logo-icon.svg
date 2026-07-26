@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 500">
+  <!-- Z pixel icon — Zozimus Technologies -->
+
+  <!-- Green shadow Z (offset +10,+8) -->
+  <polygon fill="#4ade80" points="
+    132,92 372,92 372,130 182,130 362,370 372,370 372,408 132,408 132,368 322,368 132,130
+  "/>
+
+  <!-- White Z on top -->
+  <polygon fill="white" points="
+    122,82 362,82 362,120 172,120 352,360 362,360 362,400 122,400 122,362 312,362 122,120
+  "/>
+
+  <!-- Pixel dots — upper left, trailing into Z -->
+  <!-- row 0 -->
+  <rect x="138" y="48"  width="14" height="14" fill="#4ade80"/>
+  <!-- row 1 -->
+  <rect x="108" y="72"  width="11" height="11" fill="#4ade80"/>
+  <rect x="126" y="68"  width="22" height="22" fill="#4ade80"/>
+  <rect x="155" y="70"  width="12" height="12" fill="#4ade80"/>
+  <!-- row 2 -->
+  <rect x="94"  y="97"  width="9"  height="9"  fill="#4ade80"/>
+  <rect x="108" y="95"  width="16" height="16" fill="#4ade80"/>
+  <rect x="130" y="92"  width="16" height="16" fill="#4ade80"/>
+  <!-- row 3 -->
+  <rect x="108" y="118" width="12" height="12" fill="#4ade80"/>
+  <rect x="126" y="120" width="12" height="12" fill="#4ade80"/>
+  <!-- row 4 -->
+  <rect x="116" y="138" width="9"  height="9"  fill="#4ade80"/>
+</svg>
