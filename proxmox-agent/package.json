@@ -1,0 +1,12 @@
+{
+  "name": "voxelhost-agent",
+  "version": "1.0.0",
+  "description": "Proxmox agent that polls Supabase for server management jobs and executes them",
+  "main": "agent.js",
+  "scripts": {
+    "start": "node agent.js"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.49.0"
+  }
+}
