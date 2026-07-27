@@ -66,32 +66,57 @@ export default function Pricing({ onSignUp }) {
     setPaying(plan.id)
     try {
       const { data: { session } } = await supabase.auth.getSession()
-      const res = await fetch(`${EDGE_URL}/create-subscription`, {
+
+      // Step 1 — create order
+      const res = await fetch(`${EDGE_URL}/create-order`, {
         method: 'POST',
         headers: { 'Authorization': `Bearer ${session.access_token}`, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ plan_id: plan.id, currency: 'INR', coupon_code: coupon?.code ?? null }),
+        body: JSON.stringify({ plan_id: plan.id, coupon_code: coupon?.code ?? null }),
       })
       const data = await res.json()
-      if (!res.ok) {
-        if (res.status === 422) {
-          window.location.href = `mailto:zozimustechnologies@outlook.com?subject=${plan.email_subject}${coupon ? `&body=Coupon: ${coupon.code}` : ''}`
-          return
-        }
-        throw new Error(data.error ?? 'Failed to create subscription')
-      }
+      if (!res.ok) throw new Error(data.error ?? 'Failed to create order')
+
       const loaded = await loadRazorpay()
       if (!loaded) throw new Error('Razorpay SDK failed to load')
-      const rzp = new window.Razorpay({
-        key:             data.razorpay_key_id,
-        subscription_id: data.subscription_id,
-        name:            'VoxelHost',
-        description:     `${data.plan_name} Plan`,
-        image:           `${import.meta.env.BASE_URL}logo-icon.svg`,
-        prefill:         { email: user.email },
-        theme:           { color: '#4ade80' },
-        handler: () => toast({ message: '🎉 Subscription activated! Check your email for server details.' }),
+
+      // Step 2 — open checkout
+      await new Promise((resolve, reject) => {
+        const rzp = new window.Razorpay({
+          key:         data.razorpay_key_id,
+          order_id:    data.order_id,
+          amount:      data.amount,
+          currency:    data.currency,
+          name:        'VoxelHost',
+          description: `${data.plan_name} Plan`,
+          image:       `${import.meta.env.BASE_URL}logo-icon.svg`,
+          prefill:     { email: user.email },
+          theme:       { color: '#4ade80' },
+          handler: async (response) => {
+            try {
+              // Step 3 — verify payment + activate whitelist
+              const vRes = await fetch(`${EDGE_URL}/verify-payment`, {
+                method: 'POST',
+                headers: { 'Authorization': `Bearer ${session.access_token}`, 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  razorpay_order_id:   response.razorpay_order_id,
+                  razorpay_payment_id: response.razorpay_payment_id,
+                  razorpay_signature:  response.razorpay_signature,
+                  plan_id:             plan.id,
+                  coupon_code:         coupon?.code ?? null,
+                }),
+              })
+              const vData = await vRes.json()
+              if (!vRes.ok) throw new Error(vData.error ?? 'Payment verification failed')
+              toast({ message: '🎉 Payment confirmed! Your server is being set up.' })
+              resolve(null)
+            } catch (err) {
+              reject(err)
+            }
+          },
+          modal: { ondismiss: () => resolve(null) },
+        })
+        rzp.open()
       })
-      rzp.open()
     } catch (err) {
       toast({ message: err.message, type: 'error' })
     } finally {
