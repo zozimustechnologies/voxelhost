@@ -8,6 +8,7 @@
 //   4. Run: node agent.js (or install as a systemd service — see voxelhost-agent.service)
 
 import { createClient }  from '@supabase/supabase-js'
+import { Rcon }          from 'rcon-client'
 import { execFile }      from 'node:child_process'
 import { promisify }     from 'node:util'
 import { readFileSync }  from 'node:fs'
@@ -37,13 +38,35 @@ const exec = promisify(execFile)
 const SUPABASE_URL     = requireEnv('SUPABASE_URL')
 const SUPABASE_KEY     = requireEnv('SUPABASE_SERVICE_ROLE_KEY')
 const BACKUP_STORAGE   = process.env.BACKUP_STORAGE   ?? 'local'
-const MC_SCREEN_NAME   = process.env.MC_SCREEN_NAME   ?? 'mc'
+const RCON_PASSWORD    = requireEnv('RCON_PASSWORD')
+const RCON_PORT        = Number(process.env.RCON_PORT ?? 25575)
 const POLL_INTERVAL_MS = Number(process.env.POLL_INTERVAL_MS ?? 5000)
 
 // Comma-separated list of allowed MC container IDs, e.g. "101,102,103"
 const MC_CONTAINERS = new Set(
   requireEnv('MC_CONTAINERS').split(',').map(s => s.trim()).filter(Boolean)
 )
+
+// Map container ID -> LXC host IP (containers are reachable via their vmbr0 IP)
+// Format: MC_CONTAINER_IPS=101:10.0.0.101,102:10.0.0.102,103:10.0.0.103
+const MC_CONTAINER_IPS = Object.fromEntries(
+  (process.env.MC_CONTAINER_IPS ?? '').split(',').map(s => s.trim()).filter(Boolean)
+    .map(entry => entry.split(':'))
+)
+
+async function rconCommand(containerId, command) {
+  const host = MC_CONTAINER_IPS[containerId]
+  if (!host) throw new Error(`No IP configured for container ${containerId}. Set MC_CONTAINER_IPS in .env`)
+
+  const rcon = new Rcon({ host, port: RCON_PORT, password: RCON_PASSWORD })
+  await rcon.connect()
+  try {
+    const response = await rcon.send(command)
+    return response
+  } finally {
+    await rcon.end()
+  }
+}
 
 function requireEnv(key) {
   const val = process.env[key]
@@ -65,16 +88,20 @@ async function handleMcAllowlist(payload, action /* 'add' | 'remove' */) {
     throw new Error(`container_id "${containerId}" is not in the allowed list (${[...MC_CONTAINERS].join(', ')})`)
   }
 
-  // Send whitelist command to the Paper server running in a screen session inside the LXC container
-  const command = `whitelist ${action} ${username}`
-  const { stdout, stderr } = await exec('pct', [
-    'exec', containerId, '--',
-    'screen', '-S', MC_SCREEN_NAME, '-X', 'stuff', `${command}\n`,
-  ])
+  const results = []
 
-  const output = (stdout + stderr).trim()
-  console.log(`[mc_allowlist_${action}] CT${containerId} ${username}: ${output || '(no output)'}`)
-  return output || `whitelist ${action} ${username} sent to CT${containerId}`
+  // Update whitelist
+  results.push(await rconCommand(containerId, `whitelist ${action} ${username}`))
+  // Reload so the change takes effect immediately
+  results.push(await rconCommand(containerId, 'whitelist reload'))
+  // On remove, kick the player if they're currently online
+  if (action === 'remove') {
+    results.push(await rconCommand(containerId, `kick ${username} You have been removed from the whitelist.`))
+  }
+
+  const result = results.filter(Boolean).join(' | ')
+  console.log(`[mc_allowlist_${action}] CT${containerId} ${username}: ${result}`)
+  return result
 }
 
 async function handleProxmoxBackup(payload) {
@@ -186,7 +213,7 @@ async function poll() {
 
 // ── Start ─────────────────────────────────────────────────────
 console.log(`[agent] VoxelHost agent started. Polling every ${POLL_INTERVAL_MS}ms`)
-console.log(`[agent] MC containers: ${[...MC_CONTAINERS].join(', ')}, screen: "${MC_SCREEN_NAME}", backup storage: ${BACKUP_STORAGE}`)
+console.log(`[agent] MC containers: ${[...MC_CONTAINERS].join(', ')}, RCON port: ${RCON_PORT}, backup storage: ${BACKUP_STORAGE}`)
 
 poll()
 setInterval(poll, POLL_INTERVAL_MS)

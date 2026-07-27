@@ -8,6 +8,7 @@
     "start": "node agent.js"
   },
   "dependencies": {
-    "@supabase/supabase-js": "^2.49.0"
+    "@supabase/supabase-js": "^2.49.0",
+    "rcon-client": "^4.2.4"
   }
 }
