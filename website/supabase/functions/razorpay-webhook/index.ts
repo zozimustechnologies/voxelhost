@@ -73,16 +73,49 @@ Deno.serve(async (req) => {
     update.razorpay_payment_id = event.payload.payment.entity.id
   }
 
+  // Fetch current subscription + user profile (for MC username + container)
+  const { data: sub } = await supabase
+    .from('subscriptions')
+    .select('user_id, coupon_code, status')
+    .eq('razorpay_sub_id', payload.id)
+    .single()
+
   // Increment coupon uses_count when subscription becomes active for the first time
-  if (newStatus === 'active') {
-    const { data: sub } = await supabase
-      .from('subscriptions')
-      .select('coupon_code, status')
-      .eq('razorpay_sub_id', payload.id)
+  if (newStatus === 'active' && sub?.coupon_code && sub.status !== 'active') {
+    await supabase.rpc('increment_coupon_uses', { p_code: sub.coupon_code })
+  }
+
+  // ── Auto whitelist management ─────────────────────────────
+  if (sub?.user_id) {
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('minecraft_username, container_id')
+      .eq('id', sub.user_id)
       .single()
 
-    if (sub?.coupon_code && sub.status !== 'active') {
-      await supabase.rpc('increment_coupon_uses', { p_code: sub.coupon_code })
+    const mc  = profile?.minecraft_username?.trim()
+    const cid = profile?.container_id
+
+    if (mc && cid) {
+      const wasActive  = sub.status === 'active'
+      const nowActive  = newStatus === 'active'
+      const nowInactive = ['cancelled', 'expired', 'paused', 'failed'].includes(newStatus)
+
+      // Add to whitelist when first becoming active
+      if (nowActive && !wasActive) {
+        await supabase.from('server_jobs').insert({
+          type:    'mc_allowlist_add',
+          payload: { username: mc, container_id: cid },
+        })
+      }
+
+      // Remove from whitelist when subscription ends/pauses
+      if (nowInactive && wasActive) {
+        await supabase.from('server_jobs').insert({
+          type:    'mc_allowlist_remove',
+          payload: { username: mc, container_id: cid },
+        })
+      }
     }
   }
 

@@ -27,9 +27,17 @@ export function AuthProvider({ children }) {
     if (error) throw error
   }
 
-  async function signUp(email, password) {
-    const { error } = await supabase.auth.signUp({ email, password })
+  async function signUp(email, password, minecraftUsername, containerId) {
+    const { data, error } = await supabase.auth.signUp({ email, password })
     if (error) throw error
+    // Save MC profile fields (upsert in case trigger already created the row)
+    if (data.user) {
+      await supabase.from('profiles').upsert({
+        id: data.user.id,
+        minecraft_username: minecraftUsername || null,
+        container_id: containerId || null,
+      }, { onConflict: 'id' })
+    }
   }
 
   async function signOut() {

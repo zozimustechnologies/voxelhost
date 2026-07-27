@@ -5,12 +5,14 @@ import styles from './AuthModal.module.css'
 
 export default function AuthModal({ onClose }) {
   const { signIn, signUp } = useAuth()
-  const [mode, setMode]         = useState('signin')
-  const [email, setEmail]       = useState('')
-  const [password, setPassword] = useState('')
-  const [error, setError]       = useState(null)
-  const [loading, setLoading]   = useState(false)
-  const [done, setDone]         = useState(false)
+  const [mode, setMode]               = useState('signin')
+  const [email, setEmail]             = useState('')
+  const [password, setPassword]       = useState('')
+  const [mcUsername, setMcUsername]   = useState('')
+  const [containerId, setContainerId] = useState('102')
+  const [error, setError]             = useState(null)
+  const [loading, setLoading]         = useState(false)
+  const [done, setDone]               = useState(false)
 
   async function handleSubmit(e) {
     e.preventDefault()
@@ -21,7 +23,7 @@ export default function AuthModal({ onClose }) {
         await signIn(email, password)
         onClose()
       } else {
-        await signUp(email, password)
+        await signUp(email, password, mcUsername.trim(), containerId)
         setDone(true)
       }
     } catch (err) {
@@ -75,6 +77,29 @@ export default function AuthModal({ onClose }) {
                   minLength={8}
                 />
               </label>
+
+              {mode === 'signup' && (
+                <>
+                  <label>
+                    Minecraft Username
+                    <input
+                      type="text"
+                      value={mcUsername}
+                      onChange={e => setMcUsername(e.target.value)}
+                      required
+                      placeholder="e.g. chdavi"
+                      autoComplete="off"
+                    />
+                  </label>
+                  <label>
+                    Server
+                    <select value={containerId} onChange={e => setContainerId(e.target.value)}>
+                      <option value="102">VoxelHost SG-1</option>
+                      <option value="103">VoxelHost SG-2</option>
+                    </select>
+                  </label>
+                </>
+              )}
 
               {error && <div className={styles.error}>{error}</div>}
 
