@@ -22,7 +22,7 @@ function fmt(paise) {
   return `₹${Number.isInteger(amount) ? amount.toLocaleString('en-IN') : amount.toFixed(2)}`
 }
 
-export default function Pricing({ onSignUp }) {
+export default function Pricing({ onSignUp, onPaymentSuccess, onPaymentFailed }) {
   const { user } = useAuth()
   const toast    = useToast()
   const [plans, setPlans]             = useState([])
@@ -107,8 +107,8 @@ export default function Pricing({ onSignUp }) {
               })
               const vData = await vRes.json()
               if (!vRes.ok) throw new Error(vData.error ?? 'Payment verification failed')
-              toast({ message: '🎉 Payment confirmed! Your server is being set up.' })
               resolve(null)
+              onPaymentSuccess?.()
             } catch (err) {
               reject(err)
             }
@@ -119,6 +119,7 @@ export default function Pricing({ onSignUp }) {
       })
     } catch (err) {
       toast({ message: err.message, type: 'error' })
+      onPaymentFailed?.()
     } finally {
       setPaying(null)
     }
