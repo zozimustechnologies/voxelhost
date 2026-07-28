@@ -3,15 +3,15 @@ import { supabase } from '../lib/supabase'
 import { useAuth }  from '../context/AuthContext'
 import styles from './PaymentConfirmation.module.css'
 
-export default function PaymentConfirmation({ onDone }) {
+export default function PaymentConfirmation({ onDone, containerId: initialContainerId, expiresAt }) {
   const { user } = useAuth()
-  const [profile, setProfile]         = useState(null)
+  const [profile, setProfile]           = useState(null)
   const [serverConfig, setServerConfig] = useState(null)
-  const [mcUsername, setMcUsername]   = useState('')
+  const [mcUsername, setMcUsername]     = useState('')
   const [launcherMode, setLauncherMode] = useState('offline')
-  const [saving, setSaving]           = useState(false)
-  const [saved, setSaved]             = useState(false)
-  const [error, setError]             = useState(null)
+  const [saving, setSaving]             = useState(false)
+  const [saved, setSaved]               = useState(false)
+  const [error, setError]               = useState(null)
 
   useEffect(() => {
     if (!user) return
@@ -23,14 +23,15 @@ export default function PaymentConfirmation({ onDone }) {
           setProfile(data)
           if (data.minecraft_username) setMcUsername(data.minecraft_username)
           if (data.launcher_mode) setLauncherMode(data.launcher_mode)
-          if (data.container_id) {
+          const cid = data.container_id ?? initialContainerId
+          if (cid) {
             supabase.from('server_configs')
-              .select('*').eq('container_id', data.container_id).single()
+              .select('*').eq('container_id', cid).single()
               .then(({ data: sc }) => { if (sc) setServerConfig(sc) })
           }
         }
       })
-  }, [user])
+  }, [user, initialContainerId])
 
   async function handleSave(e) {
     e.preventDefault()
@@ -43,13 +44,8 @@ export default function PaymentConfirmation({ onDone }) {
 
     if (err) { setError(err.message); setSaving(false); return }
 
-    // Queue whitelist add job with updated username
-    if (profile?.container_id) {
-      await supabase.from('server_jobs').insert({
-        type:    'mc_allowlist_add',
-        payload: { username: mcUsername.trim(), container_id: profile.container_id },
-      })
-    }
+    const { error: jobErr } = await supabase.rpc('request_whitelist', { p_username: mcUsername.trim() })
+    if (jobErr) console.warn('Whitelist job error:', jobErr.message)
     setSaved(true)
     setSaving(false)
   }
@@ -71,7 +67,12 @@ export default function PaymentConfirmation({ onDone }) {
           <div className={styles.serverBox}>
             <div className={styles.serverLabel}>{serverConfig.name}</div>
             <div className={styles.serverAddress}>{serverConfig.address}</div>
-            <div className={styles.serverNote}>Default port: 25565 · Minecraft {serverConfig.online_mode ? 'Premium (online mode)' : 'All launchers (offline mode)'}</div>
+            <div className={styles.serverNote}>Default port: 25565 · {serverConfig.online_mode ? 'Premium (online mode)' : 'All launchers (offline mode)'}</div>
+            {expiresAt && (
+              <div className={styles.serverNote} style={{color:'#4ade80', marginTop:'0.25rem'}}>
+                Access expires: {new Date(expiresAt).toLocaleDateString('en-IN', { day:'numeric', month:'short', year:'numeric' })}
+              </div>
+            )}
             <button
               className={styles.copyBtn}
               onClick={() => navigator.clipboard.writeText(serverConfig.address)}
@@ -91,7 +92,7 @@ export default function PaymentConfirmation({ onDone }) {
                 type="text"
                 value={mcUsername}
                 onChange={e => setMcUsername(e.target.value)}
-                placeholder="e.g. chdavi"
+                placeholder="Your Minecraft username"
                 required
                 autoComplete="off"
               />
@@ -126,7 +127,15 @@ export default function PaymentConfirmation({ onDone }) {
           </form>
         ) : (
           <div className={styles.successNote}>
-            <p>✓ You've been added to the whitelist. Join <strong>{serverConfig?.address}</strong> now!</p>
+            {serverConfig && (
+              <div className={styles.serverBox} style={{textAlign:'left',marginBottom:'1rem'}}>
+                <div className={styles.serverLabel}>{serverConfig.name}</div>
+                <div className={styles.serverAddress}>{serverConfig.address}</div>
+                <div className={styles.serverNote}>Port: 25565 · {serverConfig.online_mode ? 'Premium' : 'All launchers'}</div>
+                <button className={styles.copyBtn} onClick={() => navigator.clipboard.writeText(serverConfig.address)}>Copy Address</button>
+              </div>
+            )}
+            <p>✓ <strong>{mcUsername || 'You'}</strong> added to whitelist. Join now!</p>
             <button className={styles.submit} onClick={onDone}>Back to Home</button>
           </div>
         )}

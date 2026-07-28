@@ -11,7 +11,7 @@ const links = [
   { label: 'FAQ',          href: '#faq'          },
 ]
 
-export default function Navbar({ onSignUp }) {
+export default function Navbar({ onSignUp, onMyServer }) {
   const { user, signOut }       = useAuth()
   const [open, setOpen]         = useState(false)
   const [scrolled, setScrolled] = useState(false)
@@ -40,7 +40,7 @@ export default function Navbar({ onSignUp }) {
         <div className={styles.cta}>
           {user ? (
             <>
-              <span className={styles.userEmail}>{user.email}</span>
+              <button className={styles.btnPrimary} onClick={onMyServer}>My Server</button>
               <button className={styles.btnOutline} onClick={signOut}>Sign out</button>
             </>
           ) : (

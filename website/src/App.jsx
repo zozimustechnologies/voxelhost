@@ -14,15 +14,22 @@ import Footer              from './components/Footer'
 import AuthModal           from './components/AuthModal'
 import PaymentConfirmation from './components/PaymentConfirmation'
 import PaymentFailed       from './components/PaymentFailed'
+import MyServer            from './components/MyServer'
 
 export default function App() {
-  const [showAuth, setShowAuth] = useState(false)
-  const [page, setPage]         = useState('home') // 'home' | 'confirmed' | 'failed'
+  const [showAuth, setShowAuth]           = useState(false)
+  const [page, setPage]                   = useState('home')
+  const [paymentResult, setPaymentResult] = useState(null)
+  const [showMyServer, setShowMyServer]   = useState(false)
   return (
     <AuthProvider>
       <ToastProvider>
       {page === 'confirmed' && (
-        <PaymentConfirmation onDone={() => setPage('home')} />
+        <PaymentConfirmation
+          onDone={() => { setPage('home'); setPaymentResult(null) }}
+          containerId={paymentResult?.containerId}
+          expiresAt={paymentResult?.expiresAt}
+        />
       )}
       {page === 'failed' && (
         <PaymentFailed
@@ -32,14 +39,14 @@ export default function App() {
       )}
       {page === 'home' && (
         <>
-        <Navbar onSignUp={() => setShowAuth(true)} />
+        <Navbar onSignUp={() => setShowAuth(true)} onMyServer={() => setShowMyServer(true)} />
         <main>
           <Hero onSignUp={() => setShowAuth(true)} />
           <Features />
           <HowItWorks />
           <Pricing
             onSignUp={() => setShowAuth(true)}
-            onPaymentSuccess={() => setPage('confirmed')}
+            onPaymentSuccess={(result) => { setPaymentResult(result); setPage('confirmed') }}
             onPaymentFailed={() => setPage('failed')}
           />
           <Launchers />
@@ -48,6 +55,7 @@ export default function App() {
         </main>
       <Footer />
       {showAuth && <AuthModal onClose={() => setShowAuth(false)} />}
+      {showMyServer && <MyServer onClose={() => setShowMyServer(false)} />}
       </>
       )}
       </ToastProvider>

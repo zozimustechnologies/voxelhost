@@ -116,7 +116,7 @@ export default function Pricing({ onSignUp, onPaymentSuccess, onPaymentFailed })
               const vData = await vRes.json()
               if (!vRes.ok) throw new Error(vData.error ?? 'Verification failed')
               resolve(null)
-              onPaymentSuccess?.()
+              onPaymentSuccess?.({ containerId: vData.container_id, expiresAt: vData.expires_at })
             } catch (err) { reject(err) }
           }
           overlay.querySelector('#rzp-fail').onclick = () => {
@@ -157,7 +157,7 @@ export default function Pricing({ onSignUp, onPaymentSuccess, onPaymentFailed })
               const vData = await vRes.json()
               if (!vRes.ok) throw new Error(vData.error ?? 'Payment verification failed')
               resolve(null)
-              onPaymentSuccess?.()
+              onPaymentSuccess?.({ containerId: vData.container_id, expiresAt: vData.expires_at })
             } catch (err) {
               reject(err)
             }

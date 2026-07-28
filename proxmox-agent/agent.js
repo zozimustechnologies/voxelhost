@@ -215,5 +215,16 @@ async function poll() {
 console.log(`[agent] VoxelHost agent started. Polling every ${POLL_INTERVAL_MS}ms`)
 console.log(`[agent] MC containers: ${[...MC_CONTAINERS].join(', ')}, RCON port: ${RCON_PORT}, backup storage: ${BACKUP_STORAGE}`)
 
+// Periodically call the expire_subscriptions DB function as a safety net
+async function runExpiryCheck() {
+  const { error } = await supabase.rpc('expire_subscriptions')
+  if (error) console.error('[agent] Expiry check error:', error.message)
+  else console.log('[agent] Expiry check ran')
+}
+
 poll()
 setInterval(poll, POLL_INTERVAL_MS)
+
+// Run expiry check every 10 minutes
+runExpiryCheck()
+setInterval(runExpiryCheck, 10 * 60 * 1000)

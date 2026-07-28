@@ -74,7 +74,7 @@ export default function AuthModal({ onClose }) {
                   required
                   autoComplete={mode === 'signin' ? 'current-password' : 'new-password'}
                   placeholder="••••••••"
-                  minLength={8}
+                  minLength={mode === 'signup' ? 8 : undefined}
                 />
               </label>
 
