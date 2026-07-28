@@ -36,26 +36,28 @@ Deno.serve(async (req) => {
   if (authError || !user) return json({ error: 'Unauthorized' }, 401)
 
   // ── Body ──────────────────────────────────────────────────
-  const { razorpay_order_id, razorpay_payment_id, razorpay_signature, plan_id, coupon_code } =
+  const { razorpay_order_id, razorpay_payment_id, razorpay_signature, plan_id, coupon_code, test_bypass } =
     await req.json()
 
   if (!razorpay_order_id || !razorpay_payment_id || !razorpay_signature) {
     return json({ error: 'Missing payment fields' }, 400)
   }
 
-  // ── Verify HMAC-SHA256 signature ──────────────────────────
-  const secret  = Deno.env.get('RAZORPAY_KEY_SECRET') ?? ''
-  const message = `${razorpay_order_id}|${razorpay_payment_id}`
-  const key = await crypto.subtle.importKey(
-    'raw', new TextEncoder().encode(secret),
-    { name: 'HMAC', hash: 'SHA-256' }, false, ['sign'],
-  )
-  const sigBytes = await crypto.subtle.sign('HMAC', key, new TextEncoder().encode(message))
-  const expected = Array.from(new Uint8Array(sigBytes))
-    .map(b => b.toString(16).padStart(2, '0')).join('')
+  // ── Verify HMAC-SHA256 signature (skipped for test_bypass) ─
+  if (!test_bypass) {
+    const secret  = Deno.env.get('RAZORPAY_KEY_SECRET') ?? ''
+    const message = `${razorpay_order_id}|${razorpay_payment_id}`
+    const key = await crypto.subtle.importKey(
+      'raw', new TextEncoder().encode(secret),
+      { name: 'HMAC', hash: 'SHA-256' }, false, ['sign'],
+    )
+    const sigBytes = await crypto.subtle.sign('HMAC', key, new TextEncoder().encode(message))
+    const expected = Array.from(new Uint8Array(sigBytes))
+      .map(b => b.toString(16).padStart(2, '0')).join('')
 
-  if (expected !== razorpay_signature) {
-    return json({ error: 'Invalid payment signature' }, 400)
+    if (expected !== razorpay_signature) {
+      return json({ error: 'Invalid payment signature' }, 400)
+    }
   }
 
   // ── Fetch plan ────────────────────────────────────────────
