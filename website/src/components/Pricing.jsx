@@ -25,24 +25,29 @@ function fmt(paise) {
 export default function Pricing({ onSignUp, onPaymentSuccess, onPaymentFailed }) {
   const { user } = useAuth()
   const toast    = useToast()
-  const [plans, setPlans]             = useState([])
-  const [loading, setLoading]         = useState(true)
-  const [couponCode, setCouponCode]   = useState('')
-  const [coupon, setCoupon]           = useState(null)
-  const [couponError, setCouponError] = useState(null)
-  const [checking, setChecking]       = useState(false)
-  const [paying, setPaying]           = useState(null)
-  const [trialUsed, setTrialUsed]     = useState(false)
+  const [plans, setPlans]               = useState([])
+  const [loading, setLoading]           = useState(true)
+  const [couponCode, setCouponCode]     = useState('')
+  const [coupon, setCoupon]             = useState(null)
+  const [couponError, setCouponError]   = useState(null)
+  const [checking, setChecking]         = useState(false)
+  const [paying, setPaying]             = useState(null)
+  const [trialUsed, setTrialUsed]       = useState(false)
+  const [hasActiveSub, setHasActiveSub] = useState(false)
+  const [serverAvailable, setServerAvailable] = useState(true)
 
   useEffect(() => {
     supabase.from('plans').select('*').order('sort_order')
       .then(({ data }) => { if (data) setPlans(data); setLoading(false) })
+    supabase.rpc('has_free_server').then(({ data }) => setServerAvailable(data ?? true))
   }, [])
 
   useEffect(() => {
-    if (!user) { setTrialUsed(false); return }
+    if (!user) { setTrialUsed(false); setHasActiveSub(false); return }
     supabase.from('profiles').select('trial_used').eq('id', user.id).single()
       .then(({ data }) => { if (data) setTrialUsed(data.trial_used) })
+    supabase.from('subscriptions').select('id').eq('user_id', user.id).eq('status', 'active').maybeSingle()
+      .then(({ data }) => setHasActiveSub(!!data))
   }, [user])
 
   async function applyCoupon() {
@@ -237,10 +242,20 @@ export default function Pricing({ onSignUp, onPaymentSuccess, onPaymentFailed })
 
                   <button
                     className={styles.btn}
-                    onClick={() => !trialDone && handleSubscribe(plan)}
-                    disabled={isLoading || trialDone}
+                    onClick={() => !trialDone && !hasActiveSub && serverAvailable && handleSubscribe(plan)}
+                    disabled={isLoading || trialDone || (hasActiveSub && !isTrial) || (!hasActiveSub && !isTrial && !serverAvailable)}
+                    style={
+                      hasActiveSub && !isTrial ? {background:'#1a2a1a',color:'#4ade80',cursor:'default',border:'1px solid #4ade80'} :
+                      !serverAvailable && !isTrial && !hasActiveSub ? {background:'#1a1a1a',color:'#666',cursor:'not-allowed',border:'1px solid #2a2a2a'} :
+                      undefined
+                    }
                   >
-                    {trialDone ? 'Trial completed' : isLoading ? 'Opening…' : isTrial ? 'Try for ₹10' : user ? 'Subscribe' : 'Sign Up'}
+                    {hasActiveSub && !isTrial ? '✓ Plan Active'
+                      : !serverAvailable && !isTrial && !hasActiveSub ? 'No Servers Available'
+                      : trialDone ? 'Trial completed'
+                      : isLoading ? 'Opening…'
+                      : isTrial ? 'Try for ₹10'
+                      : user ? 'Subscribe' : 'Sign Up'}
                   </button>
                 </div>
               )

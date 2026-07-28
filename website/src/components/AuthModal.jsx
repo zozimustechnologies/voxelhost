@@ -9,7 +9,6 @@ export default function AuthModal({ onClose }) {
   const [email, setEmail]             = useState('')
   const [password, setPassword]       = useState('')
   const [mcUsername, setMcUsername]   = useState('')
-  const [containerId, setContainerId] = useState('102')
   const [error, setError]             = useState(null)
   const [loading, setLoading]         = useState(false)
   const [done, setDone]               = useState(false)
@@ -23,7 +22,7 @@ export default function AuthModal({ onClose }) {
         await signIn(email, password)
         onClose()
       } else {
-        await signUp(email, password, mcUsername.trim(), containerId)
+        await signUp(email, password, mcUsername.trim(), null)
         setDone(true)
       }
     } catch (err) {
@@ -79,26 +78,17 @@ export default function AuthModal({ onClose }) {
               </label>
 
               {mode === 'signup' && (
-                <>
-                  <label>
-                    Minecraft Username
-                    <input
-                      type="text"
-                      value={mcUsername}
-                      onChange={e => setMcUsername(e.target.value)}
-                      required
-                      placeholder="e.g. chdavi"
-                      autoComplete="off"
-                    />
-                  </label>
-                  <label>
-                    Server
-                    <select value={containerId} onChange={e => setContainerId(e.target.value)}>
-                      <option value="102">VoxelHost SG-1</option>
-                      <option value="103">VoxelHost SG-2</option>
-                    </select>
-                  </label>
-                </>
+                <label>
+                  Minecraft Username <span style={{color:'#555',fontWeight:400,fontSize:'0.8rem'}}>(optional)</span>
+                  <input
+                    type="text"
+                    value={mcUsername}
+                    onChange={e => setMcUsername(e.target.value)}
+                    placeholder="Your Minecraft username"
+                    autoComplete="off"
+                  />
+                  <span style={{fontSize:'0.75rem',color:'#555'}}>You can set this later — needed to join the server</span>
+                </label>
               )}
 
               {error && <div className={styles.error}>{error}</div>}

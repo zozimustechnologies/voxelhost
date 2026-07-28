@@ -127,14 +127,6 @@ export default function PaymentConfirmation({ onDone, containerId: initialContai
           </form>
         ) : (
           <div className={styles.successNote}>
-            {serverConfig && (
-              <div className={styles.serverBox} style={{textAlign:'left',marginBottom:'1rem'}}>
-                <div className={styles.serverLabel}>{serverConfig.name}</div>
-                <div className={styles.serverAddress}>{serverConfig.address}</div>
-                <div className={styles.serverNote}>Port: 25565 · {serverConfig.online_mode ? 'Premium' : 'All launchers'}</div>
-                <button className={styles.copyBtn} onClick={() => navigator.clipboard.writeText(serverConfig.address)}>Copy Address</button>
-              </div>
-            )}
             <p>✓ <strong>{mcUsername || 'You'}</strong> added to whitelist. Join now!</p>
             <button className={styles.submit} onClick={onDone}>Back to Home</button>
           </div>

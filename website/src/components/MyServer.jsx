@@ -15,6 +15,7 @@ export default function MyServer({ onClose }) {
   const [addingPlayer, setAddingPlayer] = useState(false)
   const [newPlayer, setNewPlayer]     = useState('')
   const [cancelling, setCancelling]   = useState(false)
+  const [confirmCancel, setConfirmCancel] = useState(false)
 
   useEffect(() => {
     if (!user) return
@@ -25,17 +26,19 @@ export default function MyServer({ onClose }) {
       supabase.from('profiles')
         .select('minecraft_username, container_id, launcher_mode')
         .eq('id', user.id).single(),
-      supabase.from('player_slots')
+      supabase.from('subscription_players')
         .select('id, username')
         .eq('user_id', user.id),
-    ]).then(([{ data: sub }, { data: profile }, { data: slotsData }]) => {
+    ]).then(([{ data: sub }, { data: profile }, { data: slotsData, error: slotsErr }]) => {
+      if (slotsErr) console.warn('slots error:', slotsErr.message)
       setSlots(slotsData ?? [])
       if (!sub) { setData(null); setLoading(false); return }
       const cid = profile?.container_id
       if (!cid) { setData({ sub, profile, server: null }); setLoading(false); return }
       supabase.from('server_configs')
         .select('*').eq('container_id', cid).single()
-        .then(({ data: sc }) => {
+        .then(({ data: sc, error: scErr }) => {
+          if (scErr) console.warn('server_configs error:', scErr.message)
           setData({ sub, profile, server: sc })
           setLoading(false)
         })
@@ -75,11 +78,12 @@ export default function MyServer({ onClose }) {
   }
 
   async function handleCancel() {
-    if (!window.confirm('Cancel your subscription? All players will be removed from the whitelist immediately.')) return
+    if (!confirmCancel) { setConfirmCancel(true); return }
     setCancelling(true)
     await supabase.rpc('cancel_subscription')
     setData(null)
     setCancelling(false)
+    setConfirmCancel(false)
   }
 
   const daysLeft = data?.sub?.current_period_end
@@ -205,13 +209,23 @@ export default function MyServer({ onClose }) {
             </div>
 
             {/* ── Cancel ── */}
-            <button
-              onClick={handleCancel}
-              disabled={cancelling}
-              style={{background:'transparent',border:'1px solid #3a1a1a',color:'#f87171',borderRadius:'0.75rem',padding:'0.7rem',width:'100%',cursor:'pointer',fontSize:'0.875rem',transition:'all 0.2s'}}
-            >
-              {cancelling ? 'Cancelling…' : 'Cancel Subscription'}
-            </button>
+            {confirmCancel ? (
+              <div style={{background:'#1a0d0d',border:'1px solid #f87171',borderRadius:'0.75rem',padding:'0.875rem',display:'flex',flexDirection:'column',gap:'0.6rem'}}>
+                <p style={{color:'#f87171',fontSize:'0.875rem',margin:0,fontWeight:600}}>Cancel subscription?</p>
+                <p style={{color:'#888',fontSize:'0.8rem',margin:0}}>All whitelisted players will be removed immediately.</p>
+                <div style={{display:'flex',gap:'0.5rem'}}>
+                  <button onClick={handleCancel} disabled={cancelling} style={{flex:1,background:'#f87171',color:'#000',border:'none',borderRadius:'0.6rem',padding:'0.6rem',fontWeight:700,cursor:'pointer',fontSize:'0.875rem'}}>{cancelling ? 'Cancelling…' : 'Yes, cancel'}</button>
+                  <button onClick={() => setConfirmCancel(false)} style={{flex:1,background:'none',border:'1px solid #333',borderRadius:'0.6rem',color:'#888',padding:'0.6rem',cursor:'pointer',fontSize:'0.875rem'}}>Keep plan</button>
+                </div>
+              </div>
+            ) : (
+              <button
+                onClick={handleCancel}
+                style={{background:'transparent',border:'1px solid #3a1a1a',color:'#f87171',borderRadius:'0.75rem',padding:'0.7rem',width:'100%',cursor:'pointer',fontSize:'0.875rem',transition:'all 0.2s'}}
+              >
+                Cancel Subscription
+              </button>
+            )}
           </>
         )}
       </div>

@@ -69,7 +69,11 @@ Deno.serve(async (req) => {
   if (!containerId) {
     const { data: assigned } = await supabase.rpc('assign_server')
     if (assigned) {
-      await supabase.from('profiles').update({ container_id: assigned }).eq('id', user.id)
+      // upsert in case the profile row doesn't exist yet
+      await supabase.from('profiles').upsert(
+        { id: user.id, container_id: assigned },
+        { onConflict: 'id' }
+      )
       containerId = assigned
     }
   }
