@@ -86,55 +86,6 @@ export default function Pricing({ onSignUp, onPaymentSuccess, onPaymentFailed })
 
       // Step 2 — open checkout
       await new Promise((resolve, reject) => {
-        // ── DEV TEST BUTTONS ─────────────────────────────────
-        if (import.meta.env.DEV) {
-          const overlay = document.createElement('div')
-          overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.85);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1rem;z-index:9999;font-family:sans-serif'
-          overlay.innerHTML = `
-            <div style="background:#111;border:1px solid #222;border-radius:1rem;padding:2rem;text-align:center;max-width:340px;width:90%">
-              <div style="color:#888;font-size:.75rem;text-transform:uppercase;letter-spacing:.1em;margin-bottom:.5rem">Test Mode</div>
-              <div style="color:#fff;font-size:1.1rem;font-weight:600;margin-bottom:.25rem">VoxelHost — ${data.plan_name}</div>
-              <div style="color:#4ade80;font-size:1.5rem;font-weight:700;margin-bottom:1.5rem">₹${(data.amount/100).toLocaleString('en-IN')}</div>
-              <div style="display:flex;flex-direction:column;gap:.75rem">
-                <button id="rzp-success" style="background:#4ade80;color:#000;font-weight:700;padding:.85rem;border:none;border-radius:.75rem;cursor:pointer;font-size:.95rem">✓ Simulate Success</button>
-                <button id="rzp-fail" style="background:transparent;color:#f87171;border:1px solid #f87171;font-weight:600;padding:.75rem;border-radius:.75rem;cursor:pointer;font-size:.9rem">✗ Simulate Failure</button>
-                <button id="rzp-close" style="background:transparent;color:#555;border:none;padding:.5rem;cursor:pointer;font-size:.85rem">Cancel</button>
-              </div>
-            </div>`
-          document.body.appendChild(overlay)
-          overlay.querySelector('#rzp-success').onclick = async () => {
-            document.body.removeChild(overlay)
-            try {
-              // Call verify-payment with fake but structurally valid data
-              const vRes = await fetch(`${EDGE_URL}/verify-payment`, {
-                method: 'POST',
-                headers: { 'Authorization': `Bearer ${session.access_token}`, 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                  razorpay_order_id:   data.order_id,
-                  razorpay_payment_id: 'pay_TEST_' + Math.random().toString(36).slice(2),
-                  razorpay_signature:  'test_bypass',
-                  plan_id:             plan.id,
-                  coupon_code:         coupon?.code ?? null,
-                  test_bypass:         true,
-                }),
-              })
-              const vData = await vRes.json()
-              if (!vRes.ok) throw new Error(vData.error ?? 'Verification failed')
-              resolve(null)
-              onPaymentSuccess?.({ containerId: vData.container_id, expiresAt: vData.expires_at })
-            } catch (err) { reject(err) }
-          }
-          overlay.querySelector('#rzp-fail').onclick = () => {
-            document.body.removeChild(overlay)
-            reject(new Error('Payment failed (test)'))
-          }
-          overlay.querySelector('#rzp-close').onclick = () => {
-            document.body.removeChild(overlay)
-            resolve(null)
-          }
-          return
-        }
-        // ─────────────────────────────────────────────────────
         const rzp = new window.Razorpay({
           key:         data.razorpay_key_id,
           order_id:    data.order_id,
