@@ -49,7 +49,8 @@ jobs:
           VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
 
       - name: Push secrets to Supabase edge functions
-        if: ${{ secrets.SUPABASE_ACCESS_TOKEN != '' }}
+        if: ${{ secrets.SUPABASE_ACCESS_TOKEN != '' && secrets.RAZORPAY_KEY_ID != '' }}
+        continue-on-error: true
         run: |
           npx supabase secrets set \
             RAZORPAY_KEY_ID=${{ secrets.RAZORPAY_KEY_ID }} \
