@@ -86,6 +86,29 @@ export default function Pricing({ onSignUp, onPaymentSuccess, onPaymentFailed })
 
       // Step 2 — open checkout
       await new Promise((resolve, reject) => {
+        // Dev-only test bypass — never shown in production builds
+        if (import.meta.env.DEV) {
+          const el = document.createElement('div')
+          el.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.85);display:flex;align-items:center;justify-content:center;z-index:9999'
+          el.innerHTML = `<div style="background:#111;border:1px solid #222;border-radius:1rem;padding:2rem;text-align:center;max-width:320px;width:90%"><div style="color:#4ade80;font-weight:700;font-size:1.1rem;margin-bottom:1rem">Test Mode — ${data.plan_name} ₹${(data.amount/100).toLocaleString('en-IN')}</div><div style="display:flex;flex-direction:column;gap:.75rem"><button id="ok" style="background:#4ade80;color:#000;font-weight:700;padding:.8rem;border:none;border-radius:.75rem;cursor:pointer">✓ Simulate Success</button><button id="fail" style="background:transparent;color:#f87171;border:1px solid #f87171;padding:.7rem;border-radius:.75rem;cursor:pointer">✗ Simulate Failure</button><button id="cancel" style="background:transparent;color:#555;border:none;padding:.4rem;cursor:pointer;font-size:.85rem">Cancel</button></div></div>`
+          document.body.appendChild(el)
+          el.querySelector('#ok').onclick = async () => {
+            document.body.removeChild(el)
+            try {
+              const vRes = await fetch(`${EDGE_URL}/verify-payment`, {
+                method: 'POST',
+                headers: { 'Authorization': `Bearer ${session.access_token}`, 'Content-Type': 'application/json' },
+                body: JSON.stringify({ razorpay_order_id: data.order_id, razorpay_payment_id: 'pay_TEST_' + Math.random().toString(36).slice(2), razorpay_signature: 'test', plan_id: plan.id, coupon_code: coupon?.code ?? null, test_bypass: true }),
+              })
+              const vData = await vRes.json()
+              if (!vRes.ok) throw new Error(vData.error ?? 'Verification failed')
+              resolve(null); onPaymentSuccess?.({ containerId: vData.container_id, expiresAt: vData.expires_at })
+            } catch (err) { reject(err) }
+          }
+          el.querySelector('#fail').onclick = () => { document.body.removeChild(el); reject(new Error('Payment failed (test)')) }
+          el.querySelector('#cancel').onclick = () => { document.body.removeChild(el); resolve(null) }
+          return
+        }
         const rzp = new window.Razorpay({
           key:         data.razorpay_key_id,
           order_id:    data.order_id,

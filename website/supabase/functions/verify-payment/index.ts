@@ -82,6 +82,7 @@ Deno.serve(async (req) => {
     user_id:              user.id,
     plan_id:              plan.id,
     status:               'active',
+    currency:             'INR',
     razorpay_order_id,
     razorpay_payment_id,
     coupon_code:          coupon_code ?? null,
