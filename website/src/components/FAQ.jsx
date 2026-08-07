@@ -24,7 +24,7 @@ const FAQS = [
     a: 'We run the latest stable Paper build by default. If you need a specific version for plugin compatibility, contact support before ordering.',
   },
   {
-    q: 'Can cracked / offline-mode clients connect?',
+    q: 'Can offline mode clients connect?',
     a: 'Servers run in online mode (Mojang authentication) by default. Offline mode can be enabled on request, but we recommend keeping it enabled for security.',
   },
   {

@@ -35,7 +35,7 @@ export default function Launchers() {
           <span className={styles.noteIcon}>⚠️</span>
           <p>
             <strong>Online vs Offline mode:</strong> A server can only run in one mode at a time.
-            If your server is set to offline mode (for cracked launchers), players with a paid
+            If your server is set to offline mode, players with a paid
             Minecraft account cannot join — and vice versa. Choose one mode per server.
           </p>
         </div>

@@ -106,7 +106,7 @@ export default function PaymentConfirmation({ onDone, containerId: initialContai
                 className={`${styles.modeBtn} ${launcherMode === 'offline' ? styles.active : ''}`}
                 onClick={() => setLauncherMode('offline')}
               >
-                <strong>Offline / Cracked</strong>
+                <strong>Offline Mode</strong>
                 <span>SKLauncher, TLauncher, any username</span>
               </button>
               <button
