@@ -9,7 +9,7 @@ const FAQS = [
   },
   {
     q: 'How long does it take to get my server?',
-    a: 'After payment confirmation, we will set up your server and send your IP address, join instructions, and a support link by email as quickly as possible.',
+    a: 'Instantly. After payment your server is assigned automatically and you will see your server address in the "My Server" panel. Set your Minecraft username there and you can join right away.',
   },
   {
     q: 'Can I install my own plugins?',
@@ -29,7 +29,7 @@ const FAQS = [
   },
   {
     q: 'How do I pay and cancel?',
-    a: 'Payment details are provided when you contact us to order. No long-term contracts — cancel any time by emailing support before your next billing period.',
+    a: 'Pay online with UPI, card, or netbanking via Razorpay. Monthly and 2-month plans auto-renew — cancel any time from the "My Server" panel on the website with one click. No emails needed.',
   },
 ]
 
