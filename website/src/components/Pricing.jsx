@@ -199,7 +199,7 @@ export default function Pricing({ onSignUp, onPaymentSuccess, onPaymentFailed, o
               return (
                 <div key={plan.id} className={`${styles.card} ${plan.popular ? styles.popular : ''} ${isTrial ? styles.trial : ''} ${trialDone ? styles.trialDone : ''}`}>
                   {plan.popular && <div className={styles.badge}>Most Popular</div>}
-                  {isTrial && !trialDone && <div className={styles.trialBadge}>⚡ Try for ₹10</div>}
+                  {isTrial && !trialDone && <div className={styles.trialBadge}>⚡ Try for ₹99</div>}
                   {trialDone                && <div className={styles.usedBadge}>Trial Used</div>}
 
                   <div className={styles.planName}>{plan.name}</div>
