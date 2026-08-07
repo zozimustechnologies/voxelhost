@@ -127,7 +127,22 @@ export default function PaymentConfirmation({ onDone, containerId: initialContai
           </form>
         ) : (
           <div className={styles.successNote}>
-            <p>✓ <strong>{mcUsername || 'You'}</strong> added to allowlist. Join now!</p>
+            {serverConfig && (
+              <div className={styles.serverBox} style={{textAlign:'left',marginBottom:'1rem'}}>
+                <div className={styles.serverLabel}>{serverConfig.name}</div>
+                <div className={styles.serverAddress}>{serverConfig.address}</div>
+                <div className={styles.serverNote}>Port: 25565 · {serverConfig.online_mode ? 'Premium' : 'All launchers'}</div>
+                <button className={styles.copyBtn} onClick={() => navigator.clipboard.writeText(serverConfig.address)}>Copy Address</button>
+              </div>
+            )}
+            <p style={{marginBottom:'0.5rem'}}>✓ <strong>{mcUsername || 'You'}</strong> added to allowlist.</p>
+            {serverConfig && (
+              <ol style={{textAlign:'left',color:'#aaa',fontSize:'0.85rem',paddingLeft:'1.2rem',marginBottom:'1rem',lineHeight:'1.7'}}>
+                <li>Open Minecraft → Multiplayer → Add Server</li>
+                <li>Paste: <code style={{background:'#1a1a1a',padding:'0.1rem 0.4rem',borderRadius:'0.3rem',color:'#4ade80',fontFamily:'monospace'}}>{serverConfig.address}</code></li>
+                <li>Join as <strong style={{color:'#fff'}}>{mcUsername}</strong></li>
+              </ol>
+            )}
             <button className={styles.submit} onClick={onDone}>Back to Home</button>
           </div>
         )}

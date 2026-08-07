@@ -72,8 +72,10 @@ export default function Pricing({ onSignUp, onPaymentSuccess, onPaymentFailed })
     try {
       const { data: { session } } = await supabase.auth.getSession()
 
-      // Step 1 — create subscription
-      const res = await fetch(`${EDGE_URL}/create-subscription`, {
+      // Trial uses one-time order; recurring plans use subscriptions
+      const isTrial = plan.name === 'Trial'
+      const endpoint = isTrial ? 'create-order' : 'create-subscription'
+      const res = await fetch(`${EDGE_URL}/${endpoint}`, {
         method: 'POST',
         headers: { 'Authorization': `Bearer ${session.access_token}`, 'Content-Type': 'application/json' },
         body: JSON.stringify({ plan_id: plan.id, coupon_code: coupon?.code ?? null }),
@@ -95,11 +97,10 @@ export default function Pricing({ onSignUp, onPaymentSuccess, onPaymentFailed })
           el.querySelector('#ok').onclick = async () => {
             document.body.removeChild(el)
             try {
-              // Simulate subscription activation via verify-payment bypass
               const vRes = await fetch(`${EDGE_URL}/verify-payment`, {
                 method: 'POST',
                 headers: { 'Authorization': `Bearer ${session.access_token}`, 'Content-Type': 'application/json' },
-                body: JSON.stringify({ razorpay_order_id: data.subscription_id, razorpay_payment_id: 'pay_TEST_' + Math.random().toString(36).slice(2), razorpay_signature: 'test', plan_id: plan.id, coupon_code: coupon?.code ?? null, test_bypass: true }),
+                body: JSON.stringify({ razorpay_order_id: data.order_id ?? data.subscription_id, razorpay_payment_id: 'pay_TEST_' + Math.random().toString(36).slice(2), razorpay_signature: 'test', plan_id: plan.id, coupon_code: coupon?.code ?? null, test_bypass: true }),
               })
               const vData = await vRes.json()
               if (!vRes.ok) throw new Error(vData.error ?? 'Verification failed')
@@ -110,18 +111,37 @@ export default function Pricing({ onSignUp, onPaymentSuccess, onPaymentFailed })
           el.querySelector('#cancel').onclick = () => { document.body.removeChild(el); resolve(null) }
           return
         }
-        const rzp = new window.Razorpay({
-          key:             data.razorpay_key_id,
-          subscription_id: data.subscription_id,
-          name:            'VoxelHost',
-          description:     `${data.plan_name} Plan`,
-          image:           `${import.meta.env.BASE_URL}logo-wordmark.png`,
-          prefill:         { email: user.email },
-          theme:           { color: '#4ade80' },
-          // Subscription activation is handled by webhook — just confirm to user
-          handler: () => { resolve(null); onPaymentSuccess?.({}) },
+        // Trial: one-time order checkout; recurring plans: subscription checkout
+        const rzpConfig: Record<string, unknown> = {
+          key:   data.razorpay_key_id,
+          name:  'VoxelHost',
+          description: `${data.plan_name} Plan`,
+          image: `${import.meta.env.BASE_URL}logo-wordmark.png`,
+          prefill: { email: user.email },
+          theme: { color: '#4ade80' },
           modal: { ondismiss: () => resolve(null) },
-        })
+        }
+        if (data.order_id) {
+          // One-time order (trial)
+          Object.assign(rzpConfig, { order_id: data.order_id, amount: data.amount, currency: data.currency })
+          rzpConfig.handler = async (response: Record<string, string>) => {
+            try {
+              const vRes = await fetch(`${EDGE_URL}/verify-payment`, {
+                method: 'POST',
+                headers: { 'Authorization': `Bearer ${session.access_token}`, 'Content-Type': 'application/json' },
+                body: JSON.stringify({ razorpay_order_id: response.razorpay_order_id, razorpay_payment_id: response.razorpay_payment_id, razorpay_signature: response.razorpay_signature, plan_id: plan.id, coupon_code: coupon?.code ?? null }),
+              })
+              const vData = await vRes.json()
+              if (!vRes.ok) throw new Error(vData.error ?? 'Payment verification failed')
+              resolve(null); onPaymentSuccess?.({ containerId: vData.container_id, expiresAt: vData.expires_at })
+            } catch (err) { reject(err) }
+          }
+        } else {
+          // Subscription (monthly/2-month)
+          Object.assign(rzpConfig, { subscription_id: data.subscription_id })
+          rzpConfig.handler = () => { resolve(null); onPaymentSuccess?.({}) }
+        }
+        const rzp = new window.Razorpay(rzpConfig)
         rzp.open()
       })
     } catch (err) {

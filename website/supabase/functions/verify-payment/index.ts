@@ -59,7 +59,12 @@ Deno.serve(async (req) => {
 
   const now = new Date()
   const expiresAt = new Date(now)
-  expiresAt.setMonth(expiresAt.getMonth() + ((plan.interval_months as number) ?? 1))
+  const minutes = (plan.interval_minutes as number | null)
+  if (minutes) {
+    expiresAt.setMinutes(expiresAt.getMinutes() + minutes)
+  } else {
+    expiresAt.setMonth(expiresAt.getMonth() + ((plan.interval_months as number) ?? 1))
+  }
 
   // Auto-assign server with fewest active subscribers
   let { data: profile } = await supabase
