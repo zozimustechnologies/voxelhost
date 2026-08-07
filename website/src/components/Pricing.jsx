@@ -22,7 +22,7 @@ function fmt(paise) {
   return `₹${Number.isInteger(amount) ? amount.toLocaleString('en-IN') : amount.toFixed(2)}`
 }
 
-export default function Pricing({ onSignUp, onPaymentSuccess, onPaymentFailed }) {
+export default function Pricing({ onSignUp, onPaymentSuccess, onPaymentFailed, onShowStatus }) {
   const { user } = useAuth()
   const toast    = useToast()
   const [plans, setPlans]               = useState([])
@@ -112,7 +112,7 @@ export default function Pricing({ onSignUp, onPaymentSuccess, onPaymentFailed })
           return
         }
         // Trial: one-time order checkout; recurring plans: subscription checkout
-        const rzpConfig: Record<string, unknown> = {
+        const rzpConfig = {
           key:   data.razorpay_key_id,
           name:  'VoxelHost',
           description: `${data.plan_name} Plan`,
@@ -124,7 +124,7 @@ export default function Pricing({ onSignUp, onPaymentSuccess, onPaymentFailed })
         if (data.order_id) {
           // One-time order (trial)
           Object.assign(rzpConfig, { order_id: data.order_id, amount: data.amount, currency: data.currency })
-          rzpConfig.handler = async (response: Record<string, string>) => {
+          rzpConfig.handler = async (response) => {
             try {
               const vRes = await fetch(`${EDGE_URL}/verify-payment`, {
                 method: 'POST',
@@ -215,21 +215,17 @@ export default function Pricing({ onSignUp, onPaymentSuccess, onPaymentFailed })
 
                   <button
                     className={styles.btn}
-                    onClick={() => !trialDone && !hasActiveSub && serverAvailable && handleSubscribe(plan)}
-                    disabled={isLoading || trialDone || (hasActiveSub && !isTrial) || (!hasActiveSub && !isTrial && !serverAvailable)}
-                    style={
-                      hasActiveSub && !isTrial ? {background:'#1a2a1a',color:'#4ade80',cursor:'default',border:'1px solid #4ade80'} :
-                      !serverAvailable && !isTrial && !hasActiveSub ? {background:'#1a1a1a',color:'#666',cursor:'not-allowed',border:'1px solid #2a2a2a'} :
-                      undefined
-                    }
+                    onClick={() => !trialDone && !hasActiveSub && handleSubscribe(plan)}
+                    disabled={isLoading || trialDone || (hasActiveSub && !isTrial)}
+                    style={hasActiveSub && !isTrial ? {background:'#1a2a1a',color:'#4ade80',cursor:'default',border:'1px solid #4ade80'} : undefined}
                   >
-                    {hasActiveSub && !isTrial ? '✓ Plan Active'
-                      : !serverAvailable && !isTrial && !hasActiveSub ? 'No Servers Available'
-                      : trialDone ? 'Trial completed'
-                      : isLoading ? 'Opening…'
-                      : isTrial ? 'Try for ₹10'
-                      : user ? 'Subscribe' : 'Sign Up'}
+                    {hasActiveSub && !isTrial ? '✓ Plan Active' : trialDone ? 'Trial completed' : isLoading ? 'Opening…' : isTrial ? 'Try for ₹99' : user ? 'Subscribe' : 'Sign Up'}
                   </button>
+                  {!serverAvailable && !hasActiveSub && !isTrial && (
+                    <button onClick={onShowStatus} style={{background:'none',border:'none',color:'#f87171',fontSize:'0.75rem',cursor:'pointer',marginTop:'0.4rem',textDecoration:'underline',padding:0}}>
+                      Servers full — check status & join waitlist
+                    </button>
+                  )}
                 </div>
               )
             })}

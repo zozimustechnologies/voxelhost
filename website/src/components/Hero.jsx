@@ -1,16 +1,26 @@
+import { useState, useEffect } from 'react'
+import { supabase } from '../lib/supabase'
 import styles from './Hero.module.css'
 
-export default function Hero() {
+export default function Hero({ onShowStatus }) {
+  const [free, setFree] = useState(null)
+
+  useEffect(() => {
+    supabase.rpc('server_availability').then(({ data }) => setFree(data?.free ?? null))
+  }, [])
+
+  const full = free === 0
+
   return (
     <section className={styles.hero}>
       <div className={styles.grid} aria-hidden="true" />
       <div className={styles.glow}  aria-hidden="true" />
 
       <div className={styles.content}>
-        <div className={styles.badge}>
+        <button className={`${styles.badge} ${full ? styles.badgeFull : ''}`} onClick={onShowStatus} style={{background:'none',border:'none',cursor:'pointer'}}>
           <span className={styles.dot} />
-          Servers online &amp; accepting players
-        </div>
+          {full ? 'Servers full — click to check status & join waitlist' : 'Servers online & accepting players'}
+        </button>
 
         <h1 className={styles.headline}>
           Minecraft Hosting<br />
