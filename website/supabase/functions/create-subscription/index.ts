@@ -44,6 +44,18 @@ Deno.serve(async (req) => {
     return json({ error: 'Unauthorized' }, 401)
   }
 
+  // ── Block duplicate active subscriptions ──────────────────
+  const { data: existing } = await supabase
+    .from('subscriptions').select('id').eq('user_id', user.id).eq('status', 'active').maybeSingle()
+  if (existing) return json({ error: 'You already have an active subscription. Cancel it first to change plans.' }, 409)
+
+  // ── Block if no free server available ─────────────────────
+  const { data: profile } = await supabase.from('profiles').select('container_id').eq('id', user.id).single()
+  if (!profile?.container_id) {
+    const { data: freeExists } = await supabase.rpc('has_free_server')
+    if (!freeExists) return json({ error: 'All servers are currently occupied. Please check back soon.' }, 503)
+  }
+
   // ── Body ──────────────────────────────────────────────────
   const { plan_id, currency = 'INR', coupon_code } = await req.json()
 

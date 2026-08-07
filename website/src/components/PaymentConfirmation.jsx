@@ -61,7 +61,7 @@ export default function PaymentConfirmation({ onDone, containerId: initialContai
         </div>
 
         <h1>Payment Confirmed!</h1>
-        <p className={styles.sub}>Your server is being set up. Fill in the details below to get connected.</p>
+        <p className={styles.sub}>Payment received! Set your username below to get server access. Your server will be ready within a minute.</p>
 
         {serverConfig && (
           <div className={styles.serverBox}>

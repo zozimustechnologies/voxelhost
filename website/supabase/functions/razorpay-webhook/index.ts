@@ -87,34 +87,34 @@ Deno.serve(async (req) => {
 
   // ── Auto whitelist management ─────────────────────────────
   if (sub?.user_id) {
-    const { data: profile } = await supabase
+    let { data: profile } = await supabase
       .from('profiles')
       .select('minecraft_username, container_id')
       .eq('id', sub.user_id)
       .single()
 
+    // Auto-assign server on first activation if not already assigned
+    const nowActive   = newStatus === 'active'
+    const wasActive   = sub.status === 'active'
+    const nowInactive = ['cancelled', 'expired', 'paused', 'failed'].includes(newStatus)
+
+    if (nowActive && !profile?.container_id) {
+      const { data: assigned } = await supabase.rpc('assign_server')
+      if (assigned) {
+        await supabase.from('profiles').upsert({ id: sub.user_id, container_id: assigned }, { onConflict: 'id' })
+        profile = { ...profile, container_id: assigned }
+      }
+    }
+
     const mc  = profile?.minecraft_username?.trim()
     const cid = profile?.container_id
 
     if (mc && cid) {
-      const wasActive  = sub.status === 'active'
-      const nowActive  = newStatus === 'active'
-      const nowInactive = ['cancelled', 'expired', 'paused', 'failed'].includes(newStatus)
-
-      // Add to whitelist when first becoming active
       if (nowActive && !wasActive) {
-        await supabase.from('server_jobs').insert({
-          type:    'mc_allowlist_add',
-          payload: { username: mc, container_id: cid },
-        })
+        await supabase.from('server_jobs').insert({ type: 'mc_allowlist_add', payload: { username: mc, container_id: cid } })
       }
-
-      // Remove from whitelist when subscription ends/pauses
       if (nowInactive && wasActive) {
-        await supabase.from('server_jobs').insert({
-          type:    'mc_allowlist_remove',
-          payload: { username: mc, container_id: cid },
-        })
+        await supabase.from('server_jobs').insert({ type: 'mc_allowlist_remove', payload: { username: mc, container_id: cid } })
       }
     }
   }
