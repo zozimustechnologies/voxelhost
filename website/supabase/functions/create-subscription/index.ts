@@ -129,7 +129,7 @@ Deno.serve(async (req) => {
   // ── Insert subscription row ───────────────────────────────
   const { data: sub, error: insertErr } = await supabase
     .from('subscriptions')
-    .insert({
+    .upsert({
       user_id:          user.id,
       plan_id:          plan.id,
       currency,
@@ -137,7 +137,7 @@ Deno.serve(async (req) => {
       status:           'created',
       coupon_code:      coupon_code ?? null,
       discount_percent: discountPercent,
-    })
+    }, { onConflict: 'user_id' })
     .select()
     .single()
 
