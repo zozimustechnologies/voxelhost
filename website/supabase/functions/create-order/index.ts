@@ -42,29 +42,7 @@ Deno.serve(async (req) => {
 
   if (authError || !user) return json({ error: 'Unauthorized' }, 401)
 
-  // ── Block if already has an active subscription ───────────
-  const { data: existing } = await supabase
-    .from('subscriptions')
-    .select('id')
-    .eq('user_id', user.id)
-    .eq('status', 'active')
-    .maybeSingle()
-
-  if (existing) return json({ error: 'You already have an active subscription. Cancel it first to change plans.' }, 409)
-
-  // ── Check if a free server is available ───────────────────
-  // (skip if user already has a container assigned)
-  const { data: profile } = await supabase
-    .from('profiles').select('container_id').eq('id', user.id).single()
-
-  if (!profile?.container_id) {
-    const { data: freeExists } = await supabase.rpc('has_free_server')
-    if (!freeExists) {
-      return json({ error: 'All servers are currently occupied. Please check back soon.' }, 503)
-    }
-  }
-
-  // ── Body ──────────────────────────────────────────────────
+  // ── Body (read early to check plan type) ──────────────────
   const { plan_id, coupon_code } = await req.json()
   if (!plan_id) return json({ error: 'plan_id is required' }, 400)
 
@@ -76,6 +54,21 @@ Deno.serve(async (req) => {
     .single()
 
   if (planError || !plan) return json({ error: 'Plan not found' }, 404)
+
+  const isTrial = plan.name === 'Trial'
+
+  // ── For non-trial plans: block duplicate subs + check server availability ─
+  if (!isTrial) {
+    const { data: existing } = await supabase
+      .from('subscriptions').select('id').eq('user_id', user.id).eq('status', 'active').maybeSingle()
+    if (existing) return json({ error: 'You already have an active subscription. Cancel it first.' }, 409)
+
+    const { data: profile } = await supabase.from('profiles').select('container_id').eq('id', user.id).single()
+    if (!profile?.container_id) {
+      const { data: freeExists } = await supabase.rpc('has_free_server')
+      if (!freeExists) return json({ error: 'All servers are currently occupied. Please check back soon.' }, 503)
+    }
+  }
 
   // ── Coupon validation ─────────────────────────────────────
   let discountPercent = 0
