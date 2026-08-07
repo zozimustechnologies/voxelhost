@@ -115,7 +115,7 @@ export default function Pricing({ onSignUp, onPaymentSuccess, onPaymentFailed })
           subscription_id: data.subscription_id,
           name:            'VoxelHost',
           description:     `${data.plan_name} Plan`,
-          image:           `${import.meta.env.BASE_URL}logo-icon.svg`,
+          image:           `${import.meta.env.BASE_URL}logo-wordmark.png`,
           prefill:         { email: user.email },
           theme:           { color: '#4ade80' },
           // Subscription activation is handled by webhook — just confirm to user
