@@ -180,7 +180,7 @@ export default function MyServer({ onClose }) {
             {/* ── Extra players ── */}
             <div className={styles.howTo}>
               <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:'0.6rem'}}>
-                <div className={styles.howToTitle} style={{margin:0}}>Whitelisted Players</div>
+                <div className={styles.howToTitle} style={{margin:0}}>Allowlisted Players</div>
                 {!addingPlayer && (
                   <button onClick={() => setAddingPlayer(true)} style={{background:'none',border:'1px solid #333',borderRadius:'0.4rem',color:'#aaa',fontSize:'0.78rem',padding:'0.2rem 0.6rem',cursor:'pointer'}}>+ Add</button>
                 )}
@@ -212,7 +212,7 @@ export default function MyServer({ onClose }) {
             {confirmCancel ? (
               <div style={{background:'#1a0d0d',border:'1px solid #f87171',borderRadius:'0.75rem',padding:'0.875rem',display:'flex',flexDirection:'column',gap:'0.6rem'}}>
                 <p style={{color:'#f87171',fontSize:'0.875rem',margin:0,fontWeight:600}}>Cancel subscription?</p>
-                <p style={{color:'#888',fontSize:'0.8rem',margin:0}}>All whitelisted players will be removed immediately.</p>
+                <p style={{color:'#888',fontSize:'0.8rem',margin:0}}>All allowlisted players will be removed immediately.</p>
                 <div style={{display:'flex',gap:'0.5rem'}}>
                   <button onClick={handleCancel} disabled={cancelling} style={{flex:1,background:'#f87171',color:'#000',border:'none',borderRadius:'0.6rem',padding:'0.6rem',fontWeight:700,cursor:'pointer',fontSize:'0.875rem'}}>{cancelling ? 'Cancelling…' : 'Yes, cancel'}</button>
                   <button onClick={() => setConfirmCancel(false)} style={{flex:1,background:'none',border:'1px solid #333',borderRadius:'0.6rem',color:'#888',padding:'0.6rem',cursor:'pointer',fontSize:'0.875rem'}}>Keep plan</button>

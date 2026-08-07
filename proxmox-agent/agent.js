@@ -90,13 +90,16 @@ async function handleMcAllowlist(payload, action /* 'add' | 'remove' */) {
 
   const results = []
 
-  // Update whitelist
+  // Update allowlist (uses Paper's whitelist command internally)
   results.push(await rconCommand(containerId, `whitelist ${action} ${username}`))
   // Reload so the change takes effect immediately
   results.push(await rconCommand(containerId, 'whitelist reload'))
-  // On remove, kick the player if they're currently online
+  // On remove, kick the player; on add, send a welcome message
   if (action === 'remove') {
-    results.push(await rconCommand(containerId, `kick ${username} You have been removed from the whitelist.`))
+    results.push(await rconCommand(containerId, `kick ${username} You have been removed from the allowlist.`))
+  } else {
+    // Small delay then welcome — player may not be online yet, ignore error
+    try { await rconCommand(containerId, `say Welcome to VoxelHost, ${username}!`) } catch {}
   }
 
   const result = results.filter(Boolean).join(' | ')

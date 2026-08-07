@@ -122,12 +122,12 @@ export default function PaymentConfirmation({ onDone, containerId: initialContai
             {error && <div className={styles.error}>{error}</div>}
 
             <button type="submit" className={styles.submit} disabled={saving}>
-              {saving ? 'Saving…' : 'Save & Get Whitelisted'}
+              {saving ? 'Saving…' : 'Save & Get Access'}
             </button>
           </form>
         ) : (
           <div className={styles.successNote}>
-            <p>✓ <strong>{mcUsername || 'You'}</strong> added to whitelist. Join now!</p>
+            <p>✓ <strong>{mcUsername || 'You'}</strong> added to allowlist. Join now!</p>
             <button className={styles.submit} onClick={onDone}>Back to Home</button>
           </div>
         )}
